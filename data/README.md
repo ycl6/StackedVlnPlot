@@ -80,6 +80,12 @@ pbmc <- FindClusters(pbmc, resolution = 0.5, random.seed = 12345)
 
 # Save pmbc obj
 saveRDS(pbmc, "pbmc_2k_v3_Seurat.rds")
+
+# Get object's identity classes
+identity <- Idents(pbmc)
+
+# Save identity obj
+saveRDS(identity, "data/pbmc_2k_v3_Seurat_Idents.rds")
 ```
 
 ```R
