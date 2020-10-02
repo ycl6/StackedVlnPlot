@@ -28,7 +28,7 @@ b <- VlnPlot(pbmc, features, stack = TRUE, sort = TRUE, flip = TRUE) +
 a + b
 ```
 
-<img src="https://github.com/ycl6/StackedVlnPlot/raw/master/images/StackedVlnPlot_Seurat.png" width="700px" alt="Using Seurat's VlnPlot function">
+<img src="https://github.com/ycl6/StackedVlnPlot/raw/master/images/StackedVlnPlot_Seurat.png" width="800px" alt="Using Seurat's VlnPlot function">
 
 ## With `ggplot2`
 
@@ -155,7 +155,7 @@ c + d
 
 > **Note:** Some of the codes below are taken and modified from the `Seurat` package.
 
-Below demonstrate how to recreate the reordering of the identity classes and features seens in Seurat's stacked violin plots. 
+Below demonstrates how to recreate the reordering of the identity classes and features seen in Seurat's stacked violin plots. 
 
 ```R
 # Calculate average expression per Idents, output as wide format
