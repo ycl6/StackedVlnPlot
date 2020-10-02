@@ -32,6 +32,7 @@ pbmc
 
 ```R
 # Downsampling to 2000 cells to reduce file size
+set.seed(12345)
 pbmc = subset(pbmc, cells = sample(Cells(pbmc), 2000))
 pbmc
 ```
@@ -50,8 +51,8 @@ pbmc
 ```
 
 > An object of class Seurat<br />
-> 18791 features across 1854 samples within 1 assay<br />
-> Active assay: RNA (18791 features, 0 variable features)
+> 18791 features across 1865 samples within 1 assay<br />
+> Active assay: RNA (18791 features, 0 variable features)<br />
 
 ```R
 # Normalization
@@ -67,13 +68,23 @@ pbmc <- ScaleData(pbmc, features = all.genes)
 # Regress out percent.mito
 pbmc <- ScaleData(pbmc, vars.to.regress = "percent.mito")
 
+# Run a PCA dimensionality reduction
+pbmc <- RunPCA(pbmc, features = VariableFeatures(object = pbmc), verbose = FALSE)
+
+# Constructs a Shared Nearest Neighbor (SNN) Graph
+set.seed(12345)
+pbmc <- FindNeighbors(pbmc, reduction = "pca", dims = 1:20)
+
+# Identify clusters of cells by a shared nearest neighbor (SNN) modularity optimization based clustering algorithm
+pbmc <- FindClusters(pbmc, resolution = 0.5, random.seed = 12345)
+
 # Save pmbc obj
 saveRDS(pbmc, "pbmc_2k_v3_Seurat.rds")
 ```
 
 ```R
 # Save expression as data.frame
-pbmcNorm = FetchData(pbmc, rownames(pbmc), slot = "data")
+pbmcNorm = FetchData(pbmc, all.genes, slot = "data")
 
 # Transpose so that rows are genes and columns are cells
 pbmcNorm = t(pbmcNorm)
