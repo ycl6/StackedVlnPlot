@@ -2,7 +2,7 @@
 
 ## Demo data
 
-The scRNA-seq demo data (`*rds`) files available in the `data` folder of this repository.
+The scRNA-seq demo data (`*rds`) files are available in the `data` folder of this repository.
 
 ## With `Seurat`
 
