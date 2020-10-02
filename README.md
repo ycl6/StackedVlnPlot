@@ -34,6 +34,8 @@ a + b
 
 Given a `data.frame` and a vector of identity classes (cluster ID), a stacked violin plot can be created with the `ggplot2` package.
 
+### Prepare `data.frame`
+
 ```R
 library(ggplot2)
 library(cowplot)
@@ -67,6 +69,8 @@ The converted *long format* `pbmc`:
 5 AAACGCTGTGTCCGGT-1    LYZ 5.332104      1
 6 AAACGCTGTGTCCGGT-1 LGALS3 2.306096      1
 ```
+
+### Create plots
 
 There are different ways to show the stacked violin plot:
 
@@ -146,3 +150,65 @@ c + d
 ```
 
 <img src="https://github.com/ycl6/StackedVlnPlot/raw/master/images/StackedVlnPlot_dataframe2.png" width="900px" alt="Using ggplot2  (Plot c and d)">
+
+### Sort identity classes and features
+
+> **Note:** Some of the codes below are taken and modified from the `Seurat` package.
+
+Below demonstrate how to recreate the reordering of the identity classes and features seens in Seurat's stacked violin plots. 
+
+```R
+# Calculate average expression per Idents, output as wide format
+avg <- sapply(X = split(x = pbmc, f = pbmc$Idents),
+              FUN = function(df) { return(tapply(X = df$Expr, INDEX = df$Feat, FUN = mean)) })
+
+# L2Norm (Euclidean norm) function
+L2Norm <- function(mat, MARGIN){
+        normalized <- sweep(x = mat, MARGIN = MARGIN,
+                            STATS = apply(X = mat, MARGIN = MARGIN,
+                                          FUN = function(x){ sqrt(x = sum(x ^ 2)) }), FUN = "/")
+        normalized[!is.finite(x = normalized)] <- 0
+        return(normalized)
+}
+
+# Performs hierarchical clustering
+idents.order <- hclust(d = dist(t(L2Norm(mat = avg, MARGIN = 2))))$order
+avg <- avg[,idents.order]
+avg <- L2Norm(mat = avg, MARGIN = 1)
+mat <- hclust(d = dist(avg))$merge
+
+# Order feature clusters by position of their "rank-1 idents"
+position <- apply(X = avg, MARGIN = 1, FUN = which.max)
+orderings <- list()
+for (i in 1:nrow(mat)) {
+        x <- if (mat[i,1] < 0) -mat[i,1] else orderings[[mat[i,1]]]
+        y <- if (mat[i,2] < 0) -mat[i,2] else orderings[[mat[i,2]]]
+        x.pos <- min(x = position[x])
+        y.pos <- min(x = position[y])
+        orderings[[i]] <- if (x.pos < y.pos) { c(x, y) } else { c(y, x) }
+}
+features.order <- orderings[[length(orderings)]]
+
+# Update Feature and Identity factor orders
+pbmc$Idents <- factor(pbmc$Idents, levels = levels(pbmc$Idents)[idents.order])
+pbmc$Feat <- factor(pbmc$Feat, levels = levels(pbmc$Feat)[features.order])
+
+# Plot stacked violin plot with reordered identity classes and features
+e <- ggplot(pbmc, aes(factor(Feat), Expr, fill = Feat)) +
+        geom_violin(scale = "width", adjust = 1, trim = TRUE) +
+        scale_y_continuous(expand = c(0, 0), position="right", labels = function(x)
+                           c(rep(x = "", times = length(x)-2), x[length(x) - 1], "")) +
+        facet_grid(rows = vars(Idents), scales = "free", switch = "y") +
+        theme_cowplot(font_size = 12) +
+        theme(legend.position = "none", panel.spacing = unit(0, "lines"),
+              panel.background = element_rect(fill = NA, color = "black"),
+              strip.background = element_blank(),
+              strip.text = element_text(face = "bold"),
+              strip.text.y.left = element_text(angle = 0),
+              axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+        ggtitle("Feature on x-axis") + xlab("Feature") + ylab("Expression Level")
+
+e
+```
+
+<img src="https://github.com/ycl6/StackedVlnPlot/raw/master/images/StackedVlnPlot_dataframe3.png" width="450px" alt="Hierarchical clustering of identity classes and features">
