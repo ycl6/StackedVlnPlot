@@ -219,7 +219,7 @@ e
 
 <img src="https://github.com/ycl6/StackedVlnPlot/raw/master/images/StackedVlnPlot_dataframe3.png" width="450px" alt="Hierarchical clustering of identity classes and features">
 
-### Given a `SingleCellExperiment` obj
+## Given a `SingleCellExperiment` obj
 
 The expression and cluster information can be extracted from a *processed* `SingleCellExperiment` object to create a stacked violin plot with the `ggplot2` package.
 
