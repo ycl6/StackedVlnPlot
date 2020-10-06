@@ -49,25 +49,31 @@ features <- c("CD79A", "MS4A1", "CD8A", "CD8B", "LYZ", "LGALS3", "S100A8", "GNLY
               "NKG7", "KLRB1", "FCGR3A", "FCER1A", "CST3")
 
 # Subset data.frame
-pbmc <- pbmc[features,]
+pbmc <- pbmc[,features]
+
+# Add cell ID and identity classes
+pbmc$Cell = rownames(pbmc)
+pbmc$Idents <- identity
 
 # Use melt to change data.frame format
-pbmc <- reshape2::melt(pbmc, varnames = c("Feat", "Cell"), value.name = "Expr")
-
-# Merge with identity classes
-pbmc <- merge(pbmc, data.frame(Cell = names(identity), Idents = identity), by = "Cell")
+pbmc <- reshape2::melt(pbmc, id.vars = c("Cell","Idents"), measure.vars = features,
+                       variable.name = "Feat", value.name = "Expr")
 ```
 
 The converted *long format* `pbmc`:
 
 ```
-                Cell   Feat     Expr Idents
-1 AAACGCTGTGTCCGGT-1  CD79A 0.000000      1
-2 AAACGCTGTGTCCGGT-1  MS4A1 0.000000      1
-3 AAACGCTGTGTCCGGT-1   CD8A 0.000000      1
-4 AAACGCTGTGTCCGGT-1   CD8B 0.000000      1
-5 AAACGCTGTGTCCGGT-1    LYZ 5.332104      1
-6 AAACGCTGTGTCCGGT-1 LGALS3 2.306096      1
+                 Cell Idents  Feat     Expr
+1  AACAACCTCACCTCTG-1      0 CD79A 0.000000
+2  AGGAGGTTCGCGGACT-1      0 CD79A 1.743733
+3  AGGCATTCAAGACGGT-1      1 CD79A 0.000000
+4  GCAACCGCAGTTTCGA-1      1 CD79A 0.000000
+5  TTTCACATCGTCCTCA-1      1 CD79A 0.000000
+6  CTGCCTAAGCGTTCAT-1      1 CD79A 0.000000
+7  CCTCCTCAGCGTCAGA-1      5 CD79A 3.104723
+8  AACCATGAGAGCCTGA-1      0 CD79A 0.000000
+9  ATGAGTCTCACATTGG-1      2 CD79A 0.000000
+10 AGTCATGCACTAACCA-1      4 CD79A 2.756005
 ```
 
 ### Create plots
