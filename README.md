@@ -52,7 +52,7 @@ features <- c("CD79A", "MS4A1", "CD8A", "CD8B", "LYZ", "LGALS3", "S100A8", "GNLY
 pbmc <- pbmc[,features]
 
 # Add cell ID and identity classes
-pbmc$Cell = rownames(pbmc)
+pbmc$Cell <- rownames(pbmc)
 pbmc$Idents <- identity
 
 # Use melt to change data.frame format
@@ -218,3 +218,71 @@ e
 ```
 
 <img src="https://github.com/ycl6/StackedVlnPlot/raw/master/images/StackedVlnPlot_dataframe3.png" width="450px" alt="Hierarchical clustering of identity classes and features">
+
+### Given a `SingleCellExperiment` obj
+
+The expression and cluster information can be extracted from a *processed* `SingleCellExperiment` object to create a stacked violin plot with the `ggplot2` package.
+
+```R
+library(scater)
+library(cowplot)
+
+# Load sce obj
+sce <- readRDS("data/pbmc_2k_v3_sce.rds")
+```
+
+The `SingleCellExperiment` object provided in this repository contains both raw and normalised counts. The cluster assignments are stored in the `colData`.
+
+```
+> sce
+class: SingleCellExperiment 
+dim: 18791 1865 
+metadata(1): Samples
+assays(2): counts logcounts
+rownames(18791): AL627309.1 AL627309.3 ... AL354822.1 AC240274.1
+rowData names(6): ID Symbol ... detected n_cells
+colnames(1865): AACAACCTCACCTCTG-1 AGGAGGTTCGCGGACT-1 ...
+  AATGGAACAGTAGGAC-1 CCCAACTTCTCGAGTA-1
+colData names(13): Sample Barcode ... total label
+reducedDimNames(1): PCA
+spikeNames(0):
+altExpNames(0):
+```
+
+Store the required information from the `sce` object in a `data.frame`, and create stacked violin plot. 
+
+```R
+features <- c("CD79A", "MS4A1", "CD8A", "CD8B", "LYZ", "LGALS3", "S100A8", "GNLY",
+              "NKG7", "KLRB1", "FCGR3A", "FCER1A", "CST3")
+
+# Subset dgCMatrix
+pbmc <- assay(sce, "logcounts")[features,]
+
+# Transpose and convert to data.frame
+pbmc <- as.data.frame(t(as.matrix(pbmc)))
+
+# Add cell ID and identity classes
+pbmc$Cell <- rownames(pbmc)
+pbmc$Cluster <- sce$label
+
+# Use melt to change data.frame format
+pbmc <- reshape2::melt(pbmc, id.vars = c("Cell","Cluster"), measure.vars = features,
+                       variable.name = "Feat", value.name = "Expr")
+
+f <- ggplot(pbmc, aes(factor(Feat), Expr, fill = Feat)) +
+        geom_violin(scale = "width", adjust = 1, trim = TRUE) +
+        scale_y_continuous(expand = c(0, 0), position="right", labels = function(x)
+                           c(rep(x = "", times = length(x)-2), x[length(x) - 1], "")) +
+        facet_grid(rows = vars(Cluster), scales = "free", switch = "y") +
+        theme_cowplot(font_size = 12) +
+        theme(legend.position = "none", panel.spacing = unit(0, "lines"),
+              panel.background = element_rect(fill = NA, color = "black"),
+              strip.background = element_blank(),
+              strip.text = element_text(face = "bold"),
+              strip.text.y.left = element_text(angle = 0),
+              axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+        ggtitle("Feature on x-axis") + xlab("Feature") + ylab("Expression Level")
+f
+```
+
+<img src="https://github.com/ycl6/StackedVlnPlot/raw/master/images/StackedVlnPlot_scater.png" width="450px" alt="Using ggplot2 on SingleCellExperiment object">
