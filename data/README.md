@@ -37,7 +37,8 @@ pbmc
 ```R
 # Downsampling to 2000 cells to reduce file size
 set.seed(12345)
-pbmc = subset(pbmc, cells = sample(Cells(pbmc), 2000))
+cells.to.keep = sample(Cells(pbmc), 2000)
+pbmc = subset(pbmc, cells = cells.to.keep)
 pbmc
 ```
 
@@ -97,9 +98,6 @@ saveRDS(identity, "data/pbmc_2k_v3_Seurat_Idents.rds")
 ```R
 # Save expression as data.frame
 pbmcNorm = FetchData(pbmc, all.genes, slot = "data")
-
-# Transpose so that rows are genes and columns are cells
-pbmcNorm = t(pbmcNorm)
 
 # Save pbmcNorm obj
 saveRDS(pbmcNorm, "pbmc_2k_v3_df.rds")
