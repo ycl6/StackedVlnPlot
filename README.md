@@ -219,6 +219,109 @@ e
 
 <img src="https://github.com/ycl6/StackedVlnPlot/raw/master/images/StackedVlnPlot_dataframe3.png" width="450px" alt="Hierarchical clustering of identity classes and features">
 
+### Add gene grouping annotation
+
+Below demonstrates how to add gene grouping annotation to sorted stacked violin plots. 
+
+```R
+# Create grouping info
+df <- data.frame(x = levels(pbmc$Feat), group = c("A","A","B","B","B","B","B","C","C","C","D","D","D"), 
+                 stringsAsFactors = FALSE)
+df$x <- factor(df$x, levels = levels(pbmc$Feat))
+df$group <- factor(df$group)
+df
+```
+
+| x | group |
+| :---: | :---: |
+| MS4A1 | A |
+| CD79A | A |
+| LGALS3 | B |
+| LYZ | B |
+| CST3 | B |
+| S100A8 | B |
+| FCER1A | B |
+| KLRB1 | C |
+| CD8B | C |
+| CD8A | C |
+| NKG7 | D |
+| GNLY | D |
+| FCGR3A | D |
+
+```R
+color <- c("cyan", "pink", "green", "darkorange")
+
+# Same as plot e, but hide x-axis labels, change plot.margin to reduce spacing between plots
+f <- ggplot(pbmc, aes(Feat, Expr, fill = Feat)) +
+        geom_violin(scale = "width", adjust = 1, trim = TRUE) +
+        scale_y_continuous(expand = c(0, 0), position="right", labels = function(x)
+                           c(rep(x = "", times = length(x)-2), x[length(x) - 1], "")) +
+        facet_grid(rows = vars(Idents), scales = "free", switch = "y") +
+        theme_cowplot(font_size = 12) +
+        theme(legend.position = "none", panel.spacing = unit(0, "lines"),
+              panel.background = element_rect(fill = NA, color = "black"),
+              plot.margin = unit(c(0,0,0,0), "cm"),
+              strip.background = element_blank(),
+              strip.text = element_text(face = "bold"),
+              strip.text.y.left = element_text(angle = 0),
+              axis.title.x = element_blank(),
+              axis.ticks.x = element_blank()
+              axis.text.x = element_blank()) +
+        ggtitle("Feature on x-axis") + ylab("Expression Level")
+
+# Use geom_tile() to add grouping colorings and geom_text() to add grouping labels
+g <- ggplot(df, aes(x = x, y = 1, fill = group, label = group)) + geom_tile() +
+        geom_text(fontface = "bold", size = 3) + theme_bw(base_size = 12) +
+        scale_fill_manual(values = color) + scale_y_continuous(expand = c(0, 0)) +
+        theme(legend.position = "none", panel.spacing = unit(0, "lines"),
+              panel.background = element_blank(), 
+              panel.border = element_blank(),
+              plot.background = element_blank(), 
+              plot.margin = unit(c(0,0,0,0), "cm"), 
+              axis.title.x = element_blank(),
+              axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, color = "black"),
+              axis.title.y = element_blank(),
+              axis.ticks.y = element_blank(),
+              axis.text.y = element_blank()) + xlab("Feature")
+
+# Use patchwork to join plots
+f + g + plot_layout(ncol = 1, heights = c(0.95, 0.05))
+```
+
+<img src="https://github.com/ycl6/StackedVlnPlot/raw/master/images/StackedVlnPlot_dataframe_grouping1.png" width="450px" alt="Hierarchical clustering of identity classes and features">
+
+Legend is used to defind the grouping labels when the labels are too long to fit within the annotation bar.
+
+```R
+# Change to long names
+levels(df$group) = c("long long name A", "long long name B", "long long name C", "long long name D")
+
+# guides() is used to specify some aesthetic parameters of legend key
+h <- ggplot(df, aes(x = x, y = 1, fill = group)) + geom_tile() + theme_bw(base_size = 12) +
+        scale_fill_manual(values = color) + scale_y_continuous(expand = c(0, 0)) +
+        guides(fill = guide_legend(direction = "vertical", label.position = "right",
+                             title.theme = element_blank(), keyheight = 0.5, nrow = 2)) +
+        theme(legend.position = "bottom", 
+              legend.justification = "left",
+              legend.margin = margin(0,0,0,0), 
+              legend.box.margin = margin(-10,05,0,0),
+              panel.spacing = unit(0, "lines"),
+              panel.background = element_blank(),
+              panel.border = element_blank(),
+              plot.background = element_blank(),
+              plot.margin = unit(c(0,0,0,0), "cm"),
+              axis.title.x = element_blank(),
+              axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, color = "black"),
+              axis.title.y = element_blank(),
+              axis.ticks.y = element_blank(),
+              axis.text.y = element_blank()) + xlab("Feature")
+              
+# Use patchwork to join plots
+f + h + plot_layout(ncol = 1, heights = c(0.95, 0.05))
+```
+
+<img src="https://github.com/ycl6/StackedVlnPlot/raw/master/images/StackedVlnPlot_dataframe_grouping2.png" width="450px" alt="Hierarchical clustering of identity classes and features">
+
 ## Given a `SingleCellExperiment` obj
 
 The expression and cluster information can be extracted from a *processed* `SingleCellExperiment` object to create a stacked violin plot with the `ggplot2` package.
